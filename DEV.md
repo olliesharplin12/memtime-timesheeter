@@ -2,8 +2,6 @@
 
 #### MVP
 
-1. Shared time splitting across projects
-1. Automatic DB path detection
 1. Shared time setup for other users
 1. Document application usage
 

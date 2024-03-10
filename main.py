@@ -3,6 +3,7 @@ import sqlite3
 import tzlocal
 import json
 import sys
+import os
 from typing import List
 
 from models.TimesheetEntry import TimesheetEntry
@@ -12,9 +13,9 @@ from utils.LiquidPlanner import fetch_my_account, fetch_member, fetch_tasks_by_i
 from utils.Util import ask_question
 
 
-DATABASE_PATH = 'C:\\Users\\oliver.sharplin\\AppData\\Local\\memtime\\user\\62d87704d32b2e0009546557\\data\\tb-private-local-projects\\connected-app.tb-private-local-projects.db'
 SHARED_TIME_PROJECT_NAME = 'Shared Time'
 
+DATABASE_PATH = os.path.join(os.path.expanduser('~'), 'AppData\\Local\\memtime\\user\\62d87704d32b2e0009546557\\data\\tb-private-local-projects\\connected-app.tb-private-local-projects.db')
 SECONDS_IN_DAY = 60 * 60 * 24
 ENTITY_PROJECT_TYPE = 'project'
 ENTITY_TASK_TYPE = 'task'
