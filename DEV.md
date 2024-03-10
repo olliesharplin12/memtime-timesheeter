@@ -3,7 +3,6 @@
 #### MVP
 
 1. Shared time setup for other users
-1. Document application usage
 
 
 #### Post-MVP
