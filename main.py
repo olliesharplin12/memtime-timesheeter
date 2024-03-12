@@ -237,11 +237,8 @@ def main():
             'work_performed_on': post_dt.isoformat()
         }
 
-        print(body)
-
         try:
-            pass
-            # post_timesheet_entry(task.liquid_planner_task_id, body)
+            post_timesheet_entry(task.liquid_planner_task_id, body)
         except Exception as ex:
             print(f'ERROR: Failed to upload timesheet entry for "{task.label}"')
             print(ex)

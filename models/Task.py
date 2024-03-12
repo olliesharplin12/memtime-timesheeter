@@ -44,7 +44,7 @@ class Task:
             self.liquid_planner_remaining_high = 0
     
     def get_print_summary(self, is_shared_task: bool) -> str:
-        logged_time_str = f'{str(self.get_logged_time_hrs()).ljust(4)} hrs'
+        logged_time_str = f'{str(round(self.get_logged_time_hrs(), 2)).ljust(4)} hrs'
         if is_shared_task:
             return f'{logged_time_str} | "{self.label}" ---> "No Timesheet (Shared Time Task)"'
         else:
