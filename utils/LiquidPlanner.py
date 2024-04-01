@@ -7,8 +7,10 @@ from typing import List
 
 WORKSPACE_ID = 164559
 BASE_URL = f'https://app.liquidplanner.com/api/v1/workspaces/{WORKSPACE_ID}/'
+TASK_LINK_URL_FORMAT = 'https://app.liquidplanner.com/space/164559/projects/show/{0}'
 FETCH_MEMBER_URL_FORMAT = 'members/{0}'
 FETCH_TASKS_URL = 'tasks'
+FETCH_UPCOMING_TASKS_URL = 'upcoming_tasks'
 POST_TIMESHEET_URL_FORMAT = 'treeitems/{0}/track_time'
 
 AUTH = HTTPBasicAuth(LIQUID_PLANNER_EMAIL, LIQUID_PLANNER_PASSWORD)
@@ -46,6 +48,15 @@ def fetch_tasks_by_ids(task_ids: List[int]) -> dict:
     query_params: List[tuple[str, str]] = [('filter[]=id', ','.join(map(str, task_ids)))]
 
     response = get(FETCH_TASKS_URL, query_params)
+    if response.status_code != 200:
+        raise Exception(f'Response Error: {response.text}')
+
+    return response.json()
+
+def fetch_upcoming_tasks(limit: int) -> dict:
+    query_params: List[tuple[str, str]] = [('flat', True), ('limit', limit)]
+
+    response = get(FETCH_UPCOMING_TASKS_URL, query_params)
     if response.status_code != 200:
         raise Exception(f'Response Error: {response.text}')
 

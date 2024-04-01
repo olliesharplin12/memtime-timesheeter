@@ -1,10 +1,12 @@
 from typing import List
 from models.Task import Task
+from utils.Util import strip_liquid_planner_id
 
 class Project:
-    def __init__(self, id: int, label: str):
+    def __init__(self, id: int, label: str, liquid_planner_id: str):
         self.id = id
         self.label = label
+        self.liquid_planner_id = strip_liquid_planner_id(liquid_planner_id)
         self.tasks: List[Task] = []
 
     def add_task(self, task: Task):

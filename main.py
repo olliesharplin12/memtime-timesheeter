@@ -1,24 +1,18 @@
 import datetime
-import sqlite3
-import tzlocal
-import json
 import sys
-import os
 from typing import List
 
-from models.TimesheetEntry import TimesheetEntry
 from models.Task import Task
 from models.Project import Project
+from utils.MemTime import query_time_entries, query_project, query_tasks
 from utils.LiquidPlanner import fetch_my_account, fetch_member, fetch_tasks_by_ids, post_timesheet_entry
-from utils.Util import ask_question
+from utils.Util import ask_question, get_epoch_from_datetime
 
 
+# Value cannot be None, leave empty string if not used.
 SHARED_TIME_PROJECT_NAME = 'Shared Time'
 
-DATABASE_PATH = os.path.join(os.path.expanduser('~'), 'AppData\\Local\\memtime\\user\\62d87704d32b2e0009546557\\data\\tb-private-local-projects\\connected-app.tb-private-local-projects.db')
 SECONDS_IN_DAY = 60 * 60 * 24
-ENTITY_PROJECT_TYPE = 'project'
-ENTITY_TASK_TYPE = 'task'
 
 def get_date_input() -> datetime.datetime:
     while True:
@@ -38,71 +32,6 @@ def get_date_input() -> datetime.datetime:
                 return date
             elif confirm == 'n':
                 break
-
-def get_epoch_from_datetime(dt: datetime.datetime) -> int:
-    epoch_time = datetime.datetime(1970, 1, 1, 0, 0, 0)
-    timezone_offset_secs = -int(dt.astimezone(tzlocal.get_localzone()).utcoffset().total_seconds())
-    return (dt - epoch_time).total_seconds() + timezone_offset_secs
-
-def query_time_entries(database_path: str, start_epoch: int, end_epoch: int) -> List[TimesheetEntry]:
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-
-    query = '''
-        SELECT entity, start, end, timeEntryFields
-        FROM timeEntry
-        WHERE start >= ? AND start < ? AND end >= ? AND end < ?
-    '''
-
-    res = cursor.execute(query, (start_epoch, end_epoch, start_epoch, end_epoch))
-
-    time_entries: List[TimesheetEntry] = []
-    for entry in res:
-        task_id, start_epoch, end_epoch, body = entry
-        entity = json.loads(body)['entity']
-        entry = TimesheetEntry(task_id, entity['entityType'], entity['label'], int(start_epoch), int(end_epoch))
-        time_entries.append(entry)
-
-    conn.close()
-    return time_entries
-
-def query_shared_time_project(database_path: str, shared_project_name: str) -> Project | None:
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-
-    query = f'''
-        SELECT id, name
-        FROM entity
-        WHERE name = ? AND type = ?
-    '''
-
-    res = cursor.execute(query, [shared_project_name, ENTITY_PROJECT_TYPE])
-
-    for entity in res:
-        id, label = entity
-        return Project(id, label)
-
-    return None
-
-def query_tasks(database_path: str, entity_ids: List[int]) -> List[Task]:
-    conn = sqlite3.connect(database_path)
-    cursor = conn.cursor()
-
-    query = f'''
-        SELECT id, name, description, parentId
-        FROM entity
-        WHERE id in ({','.join(['?'] * len(entity_ids))}) AND type = ?
-    '''
-
-    res = cursor.execute(query, entity_ids + [ENTITY_TASK_TYPE])
-
-    tasks: List[Task] = []
-    for entity in res:
-        id, label, liquid_planner_url, parent_id = entity
-        task = Task(id, label, liquid_planner_url, parent_id)
-        tasks.append(task)
-    
-    return tasks
 
 def get_duplicate_task_references(tasks: List[Task]) -> List[str]:
     duplicate_lp_references: List[str] = []
@@ -135,17 +64,22 @@ def main():
     end_epoch = start_epoch + SECONDS_IN_DAY
 
     # Fetch timesheet entries from database
-    timesheet_entries = query_time_entries(DATABASE_PATH, start_epoch, end_epoch)
+    timesheet_entries = query_time_entries(start_epoch, end_epoch)
     entity_ids = list(set(entry.entity_id for entry in timesheet_entries))
 
     # Fetch shared time project
-    shared_time_project = query_shared_time_project(DATABASE_PATH, SHARED_TIME_PROJECT_NAME)
-    if shared_time_project == None and SHARED_TIME_PROJECT_NAME not in [None, ""]:
-        print(f'Could not find a shared time project for {SHARED_TIME_PROJECT_NAME}')
-        sys.exit(1)
+    if len(SHARED_TIME_PROJECT_NAME) == 0:
+        shared_time_project = None
+    else:
+        projects = query_project(SHARED_TIME_PROJECT_NAME)
+        if len(projects) > 0:
+            shared_time_project = projects[0]
+        else:
+            print(f'Could not find a shared time project for {SHARED_TIME_PROJECT_NAME}')
+            sys.exit(1)
 
     # Fetch tasks from database
-    tasks = query_tasks(DATABASE_PATH, entity_ids)
+    tasks = query_tasks(entity_ids)
     for task in tasks:
         if shared_time_project != None and task.parent_id == shared_time_project.id:
             shared_time_project.add_task(task)
