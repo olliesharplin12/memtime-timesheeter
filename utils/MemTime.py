@@ -36,7 +36,7 @@ def query_time_entries(start_epoch: int, end_epoch: int) -> List[TimesheetEntry]
     conn.close()
     return time_entries
 
-def query_projects(name: str | None = None) -> List[Project]:
+def query_projects(name: str = None) -> List[Project]:
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
@@ -69,7 +69,7 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
     where_clause = 'WHERE type = ?'
     params = [ENTITY_TASK_TYPE]
     if entity_ids is not None:
-        where_clause += f' AND id in ({','.join(['?'] * len(entity_ids))})'
+        where_clause += f' AND id in ({",".join(["?"] * len(entity_ids))})'
         params += entity_ids
 
     query = f'''
@@ -89,7 +89,7 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
     conn.close()
     return tasks
 
-def insert_entity(is_project: bool, parent_id: int | None, name: str, description: str, color: str | None = None) -> int:
+def insert_entity(is_project: bool, parent_id: int, name: str, description: str, color: str = None) -> int:
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 

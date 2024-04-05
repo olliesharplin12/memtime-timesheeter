@@ -3,7 +3,7 @@ from models.TimesheetEntry import TimesheetEntry
 from utils.Util import strip_liquid_planner_url
 
 class Task:
-    def __init__(self, id: int, label: str, liquid_planner_url: str | None, parent_id: int):
+    def __init__(self, id: int, label: str, liquid_planner_url: str, parent_id: int):
         self.id = id
         self.label = label
         self.liquid_planner_url = strip_liquid_planner_url(liquid_planner_url)

@@ -15,14 +15,14 @@ POST_TIMESHEET_URL_FORMAT = 'treeitems/{0}/track_time'
 
 AUTH = HTTPBasicAuth(LIQUID_PLANNER_EMAIL, LIQUID_PLANNER_PASSWORD)
 
-def build_url(url_suffix: str, query_params: List[tuple[str, str]] | None = None) -> str:
+def build_url(url_suffix: str, query_params: List[tuple[str, str]] = None) -> str:
     if query_params is not None and len(query_params) > 0:
         # TODO: Convert to url encoded string?
         return BASE_URL + url_suffix + '?' + '&'.join([f'{key}={value}' for key, value in query_params])
     else:
         return BASE_URL + url_suffix
 
-def get(url_suffix: str, query_params: List[tuple[str, str]] | None = None) -> Response:
+def get(url_suffix: str, query_params: List[tuple[str, str]] = None) -> Response:
     url = build_url(url_suffix, query_params)
     return requests.get(url, auth=AUTH)
 

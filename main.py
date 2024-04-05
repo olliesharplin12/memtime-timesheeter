@@ -4,7 +4,7 @@ from typing import List
 
 from models.Task import Task
 from models.Project import Project
-from utils.MemTime import query_time_entries, query_project, query_tasks
+from utils.MemTime import query_time_entries, query_projects, query_tasks
 from utils.LiquidPlanner import fetch_my_account, fetch_member, fetch_tasks_by_ids, post_timesheet_entry
 from utils.Util import ask_question, get_epoch_from_datetime
 
@@ -27,7 +27,7 @@ def get_date_input() -> datetime.datetime:
                 continue
         
         while True:
-            confirm = input(f'Confirm date "{date.strftime('%d/%m/%Y')}" [y/n]: ').lower()
+            confirm = input(f'Confirm date "{date.strftime("%d/%m/%Y")}" [y/n]: ').lower()
             if confirm == 'y':
                 return date
             elif confirm == 'n':
@@ -71,7 +71,7 @@ def main():
     if len(SHARED_TIME_PROJECT_NAME) == 0:
         shared_time_project = None
     else:
-        projects = query_project(SHARED_TIME_PROJECT_NAME)
+        projects = query_projects(SHARED_TIME_PROJECT_NAME)
         if len(projects) > 0:
             shared_time_project = projects[0]
         else:
