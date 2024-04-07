@@ -107,7 +107,6 @@ def insert_entity(is_project: bool, parent_id: int, name: str, description: str,
     created_at = get_epoch_from_datetime()
 
     values = [parent_id, name, description, color, keywords, labels, is_active, entity_type, config, created_at]
-    print(values)
 
     query = f'''
         INSERT INTO entity (parentId, name, description, color, keywords, labels, isActive, type, config, createdAt)

@@ -1,4 +1,4 @@
-import datetime
+import datetime 
 import tzlocal
 
 def ask_question(question: str) -> bool:
@@ -11,8 +11,8 @@ def ask_question(question: str) -> bool:
 
 def get_epoch_from_datetime(dt: datetime.datetime = None) -> int:
     if dt is None:
-        date_time = datetime.datetime.now(datetime.UTC)
-        epoch_time = datetime.datetime(1970, 1, 1, 0, 0, 0, 0, datetime.UTC)
+        date_time = datetime.datetime.now(datetime.timezone.utc)
+        epoch_time = datetime.datetime(1970, 1, 1, 0, 0, 0, 0, datetime.timezone.utc)
         timezone_offset_secs = 0
     else:
         date_time = dt
