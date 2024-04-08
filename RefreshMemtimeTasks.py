@@ -33,6 +33,11 @@ def get_upcoming_tasks(member_id: int, days_to_get_tasks: int):
 def filter_tasks_to_create(upcoming_tasks: List[dict], memtime_tasks: List[Task]) -> List[Tuple[dict, str]]:
     tasks_to_create: List[Tuple[dict, str]] = []
     for task in upcoming_tasks:
+        # Ignore Inbox tasks for now as we won't know which MemTime project to assign them to
+        # TODO: Update project when task refetched then allow inbox tasks
+        if len(task['parent_crumbs']) < 2:
+            continue
+
         liquid_planner_url = TASK_LINK_URL_FORMAT.format(task['id'])
         associated_memtime_tasks = [task for task in memtime_tasks if task.liquid_planner_url == liquid_planner_url]
 
@@ -114,6 +119,8 @@ def main():
     if len(projects_to_create) > 0:
         confirm_and_create_projects(projects_to_create)
         memtime_projects = query_projects()
+    else:
+        print('No new projects to create')
 
     # Map tasks to MemTime project
     print('\nFiltering tasks to create...')
