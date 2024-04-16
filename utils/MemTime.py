@@ -9,6 +9,7 @@ from models.Task import Task
 from utils.Util import get_epoch_from_datetime
 
 
+# TODO: User ID is wrong
 DATABASE_PATH = os.path.join(os.path.expanduser('~'), 'AppData\\Local\\memtime\\user\\62d87704d32b2e0009546557\\data\\tb-private-local-projects\\connected-app.tb-private-local-projects.db')
 ENTITY_PROJECT_TYPE = 'project'
 ENTITY_TASK_TYPE = 'task'

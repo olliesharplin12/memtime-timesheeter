@@ -9,6 +9,7 @@ from utils.LiquidPlanner import fetch_upcoming_tasks, TASK_LINK_URL_FORMAT
 from utils.Util import ask_question
 
 
+# TODO: Get automatically
 MEMBER_ID = 916262
 DAYS_TO_GET_TASKS = 12
 
