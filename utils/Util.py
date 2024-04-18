@@ -21,13 +21,13 @@ def get_epoch_from_datetime(dt: datetime.datetime = None) -> int:
     return round((date_time - epoch_time).total_seconds() + timezone_offset_secs)
 
 def strip_liquid_planner_url(url: str) -> str:
-    if url is not None and url[-1] == 'P':
+    if url is not None and url != "" and url[-1] == 'P':
         return url [:-1]
     return url
 
 def strip_liquid_planner_id(id: str) -> int:
-    if id is None:
-        return None
+    if id is None or id == '':
+        return id
     if id[-1] == 'P':
         id = id[:-1]
     try:
