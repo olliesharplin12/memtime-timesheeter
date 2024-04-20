@@ -74,7 +74,7 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
         params += entity_ids
 
     query = f'''
-        SELECT id, name, description, parentId
+        SELECT id, name, description, parentId, isActive
         FROM entity
         {where_clause}
     '''
@@ -83,8 +83,9 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
 
     tasks: List[Task] = []
     for entity in res:
-        id, label, liquid_planner_url, parent_id = entity
-        task = Task(id, label, liquid_planner_url, parent_id)
+        id, label, liquid_planner_url, parent_id, is_active_int = entity
+        is_active = is_active_int == 1
+        task = Task(id, label, liquid_planner_url, parent_id, is_active)
         tasks.append(task)
     
     conn.close()
