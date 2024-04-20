@@ -1,12 +1,13 @@
 import datetime 
 import tzlocal
+from typing import Union
 
-def ask_question(question: str) -> bool:
+def ask_question(question: str, yes_char: str = 'y', no_char: str = 'n') -> bool:
     while True:
-        res = input(f'{question} [y/n]: ').lower()
-        if res == 'y':
+        res = input(f'{question} [{yes_char}/{no_char}]: ').lower()
+        if res == yes_char.lower():
             return True
-        elif res == 'n':
+        elif res == no_char.lower():
             return False
 
 def get_epoch_from_datetime(dt: datetime.datetime = None) -> int:
@@ -20,17 +21,18 @@ def get_epoch_from_datetime(dt: datetime.datetime = None) -> int:
         timezone_offset_secs = -int(date_time.astimezone(tzlocal.get_localzone()).utcoffset().total_seconds())
     return round((date_time - epoch_time).total_seconds() + timezone_offset_secs)
 
-def strip_liquid_planner_url(url: str) -> str:
-    if url is not None and url != "" and url[-1] == 'P':
-        return url [:-1]
-    return url
-
-def strip_liquid_planner_id(id: str) -> int:
-    if id is None or id == '':
-        return id
-    if id[-1] == 'P':
-        id = id[:-1]
+def parse_liquid_planner_id(description: str) -> Union[int | None]:
     try:
-        return int(id)
-    except ValueError:
+        if len(description) <= 9:
+            task_id_str = description
+        else:
+            task_id_str = description.split('/')[-1]
+            if task_id_str[-1] == 'P':
+                task_id_str = task_id_str[:-1]
+
+        task_id = int(task_id_str)
+        if str(task_id) == task_id_str and len(task_id_str) in [8, 9]:
+            return task_id
+        return None
+    except:
         return None

@@ -33,30 +33,6 @@ def get_date_input() -> datetime.datetime:
             elif confirm == 'n':
                 break
 
-def get_duplicate_task_references(tasks: List[Task]) -> List[str]:
-    duplicate_lp_references: List[str] = []
-    lp_task_ids = [task.liquid_planner_task_id for task in tasks]
-    for i in range(len(tasks)):
-        task = tasks[i]
-        if task.liquid_planner_task_id is not None and lp_task_ids.index(task.liquid_planner_task_id) != i:
-            info_string = f'{task.liquid_planner_url} ({task.label}, {tasks[i].label})'
-            duplicate_lp_references.append(info_string)
-    return duplicate_lp_references
-
-def print_timesheet_summary(tasks_to_timesheet: List[Task], shared_time_project: Project, shared_time_multiplier: int):
-    total_time = round(sum([task.get_logged_time_hrs() for task in (tasks_to_timesheet + shared_time_project.tasks)]), 2)
-    print(f'\nTotal Time: {total_time} hrs')
-    print('Tasks:')
-    for task in tasks_to_timesheet:
-        print(f'\t{task.get_print_summary(False)}')
-        
-    if shared_time_project is not None:
-        print()
-        for task in shared_time_project.tasks:
-            print(f'\t{task.get_print_summary(True)}')
-        print(f'\nShared time multiplier is: {round(shared_time_multiplier, 2)}')
-    print()
-
 def main():
     # Get date to log timesheet
     date = get_date_input()
@@ -78,44 +54,47 @@ def main():
             print(f'Could not find a shared time project for {SHARED_TIME_PROJECT_NAME}')
             sys.exit(1)
 
-    # Fetch tasks from database
+    # Fetch tasks from database and validate all time entries can be mapped
     tasks = query_tasks(entity_ids)
+    memtime_task_ids = [task.id for task in tasks]
+    for entry in timesheet_entries:
+        try:
+            task_index = memtime_task_ids.index(entry.entity_id)
+            tasks[task_index].add_entry(entry)
+        except ValueError:
+            print(f'ERROR: Failed to query a MemTime task for timesheet entry "{entry}"')
+            sys.exit(1)
+    
+    # Create task lists based on if they are shared time tasks and they have valid LP IDs
+    tasks_to_timesheet: List[Task] = []
+    invalid_tasks: List[Task] = []
+
     for task in tasks:
         if shared_time_project != None and task.parent_id == shared_time_project.id:
             shared_time_project.add_task(task)
-            continue
+        elif task.liquid_planner_id == None:
+            invalid_tasks.append(task)
+        else:
+            tasks_to_timesheet.append(task)
+    
+    # Confirm user wants to proceed with tasks with no LP URL
+    invalid_task_ids = [task.id for task in invalid_tasks]
+    shared_time_total_tasks: List[Task] = tasks
 
-        try:
-            success = task.set_id_from_url()
-            if success:
-                continue
-        except:
-            pass
+    if len(invalid_tasks) > 0:
+        print('The tasks below do not have a valid LiquidPlanner ID associated with them:')
+        for task in invalid_tasks:
+            print(f'\t{task.label}')
 
-        confirmed = ask_question(f'ERROR: Ensure LiquidPlanner URL in Memtime task description is valid for "{task.label}"\nDo you want to skip timesheet for this task?')
+        print()
+        confirmed = ask_question(f'Do you want to skip timesheeting the above task(s)?')
         if not confirmed:
             print('Cancelled')
             sys.exit(1)
-
-    # Check if two MemTime tasks reference the same LP task
-    duplicate_lp_tasks = get_duplicate_task_references(tasks)
-    if len(duplicate_lp_tasks) > 0:
-        print()
-        for info_string in duplicate_lp_tasks:
-            print(info_string)
-
-        print(f'\nThe above LiquidPlanner tasks were each referenced by more than one MemTime task.')
-        print(f'Please resolve this before continuing')
-        sys.exit(1)
-
-    # Map MemTime timesheet entries to MemTime tasks
-    queries_task_ids = [task.id for task in tasks]
-    for entry in timesheet_entries:
-        try:
-            task_index = queries_task_ids.index(entry.entity_id)
-            tasks[task_index].add_entry(entry)
-        except ValueError:
-            print(f'WARNING: Failed to query a task for timesheet entry "{entry}"')
+        
+        shared_time_on_remaining_tasks = ask_question(f'Do you want to split shared time across the remaining tasks, or will you timesheet the above tasks manually?', 'spl', 'man')
+        if shared_time_on_remaining_tasks:
+            shared_time_total_tasks: List[Task] = [task for task in tasks if task.id not in invalid_task_ids]
     
     # Get default activity information
     user_account = fetch_my_account()
@@ -123,33 +102,55 @@ def main():
     member = fetch_member(member_id)
     default_activity_id = member['default_activity_id']
 
-    # Find non-shared time tasks
-    tasks_to_timesheet = [task for task in tasks if task.id not in shared_time_project.get_task_ids()]
-
     # Fetch, validate and map LiquidPlanner tasks
-    liquid_planner_task_ids = [task.liquid_planner_task_id for task in tasks_to_timesheet]
+    liquid_planner_task_ids = [task.liquid_planner_id for task in tasks_to_timesheet]
     tasks_json = fetch_tasks_by_ids(liquid_planner_task_ids)
 
     lp_task_ids = [task['id'] for task in tasks_json]
     for task in tasks_to_timesheet:
         try:
-            lp_task_index = lp_task_ids.index(task.liquid_planner_task_id)
+            lp_task_index = lp_task_ids.index(task.liquid_planner_id)
         except ValueError:
             print(f'ERROR: Could not find LiquidPlanner task for "{task.label}"')
+            # TODO: Do we want to add this to invalid tasks?
             sys.exit(1)
-        
-        task.set_liquid_planner_task(member_id, default_activity_id, tasks_json[lp_task_index])
-    
-    # Calculate and set shared time multiplier
-    shared_time_multiplier = 1.0
-    if shared_time_project is not None:
-        total_time = sum([task.get_logged_time_hrs() for task in tasks])
-        total_shared_project_time = shared_time_project.get_total_task_time()
-        shared_time_multiplier = total_time / (total_time - total_shared_project_time)
-    
-    # Confirm timesheet
-    print_timesheet_summary(tasks_to_timesheet, shared_time_project, shared_time_multiplier)
 
+        # This will be set on task objects in all lists as lists contain same object references
+        task.set_liquid_planner_task(member_id, default_activity_id, tasks_json[lp_task_index])
+     
+    # Calculate and set shared time multiplier
+    total_time = sum([task.get_logged_time_hrs() for task in shared_time_total_tasks])
+    total_shared_project_time = 0 if shared_time_project is None else shared_time_project.get_total_task_time()
+    shared_time_multiplier = total_time / (total_time - total_shared_project_time)
+    
+    # Print total daily time
+    print(f'\nTotal Task Time: {round(total_time, 2)} hrs')
+
+    # If user has selected to log tasks manually, print valid task total of what is being logged by script
+    if len(invalid_tasks) > 0 and not shared_time_on_remaining_tasks:
+        invalid_task_time = sum([task.get_logged_time_hrs() for task in invalid_tasks]) * shared_time_multiplier
+        valid_task_time = total_time - invalid_task_time
+        print(f'\nValid Timesheet Tasks: {round(valid_task_time, 2)} hrs')
+
+    # Print task summary
+    for task in tasks_to_timesheet:
+        print(f'\t{task.get_print_summary(shared_time_multiplier, False)}')
+
+    # If user has selected to log tasks manually, print invalid task total and list
+    if len(invalid_tasks) > 0 and not shared_time_on_remaining_tasks:
+        print(f'\nTasks To Manually Timesheet: {round(invalid_task_time, 2)} hrs')
+        for task in invalid_tasks:
+            print(f'\t{task.get_print_summary(shared_time_multiplier, True)}')
+    
+    # Print shared time summary if time logged
+    if total_shared_project_time > 0:
+        print(f'\nShared Time Tasks: {round(total_shared_project_time, 2)} hrs ({round(shared_time_multiplier, 2)}x task multiplier)')
+        for task in shared_time_project.tasks:
+            # Shared time multiplier should not be applied to these tasks
+            print(f'\t{task.get_print_summary(1, True)}')
+
+    # Get confirmation of log output before logging to LiquidPlanner
+    print()
     confirmed = ask_question('Confirm you want to submit your timesheet as shown above?')
     if not confirmed:
         print('Cancelled')
@@ -172,9 +173,9 @@ def main():
         }
 
         try:
-            post_timesheet_entry(task.liquid_planner_task_id, body)
-        except Exception as ex:
+            post_timesheet_entry(task.liquid_planner_id, body)
+        except Exception:
             print(f'ERROR: Failed to upload timesheet entry for "{task.label}"')
-            print(ex)
 
-main()
+if __name__ == '__main__':
+    main()
