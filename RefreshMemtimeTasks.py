@@ -1,15 +1,28 @@
 import datetime
-import sys
 from typing import List, Tuple
 
 from models.Project import Project
 from models.Task import Task
-from utils.MemTime import query_tasks, query_projects, insert_entity, set_entity_is_active, set_entity_name
+from utils.MemTime import query_tasks, query_task_by_name, query_projects, insert_entity, set_entity_is_active, set_entity_name, SHARED_TIME_NAME, SHARED_TIME_COLOR
 from utils.LiquidPlanner import fetch_my_account, fetch_upcoming_tasks
-from utils.Util import ask_question
+from utils.Util import ask_question, exit
 
 
 DAYS_TO_GET_TASKS = 12
+
+def check_and_create_shared_time_entities():
+    projects = query_projects(SHARED_TIME_NAME)
+    if len(projects) > 0:
+        shared_time_project = projects[0]
+        project_id = shared_time_project.id
+    else:
+        project_id = create_memtime_project(None, SHARED_TIME_NAME, SHARED_TIME_COLOR)
+        print('Created Shared Time project')
+    
+    tasks = query_task_by_name(SHARED_TIME_NAME)
+    if len(tasks) == 0:
+        create_memtime_task(None, SHARED_TIME_NAME, project_id)
+        print('Created Shared Time task')
 
 def get_upcoming_tasks(member_id: int, days_to_get_tasks: int):
     upcoming_tasks: List[dict] = []
@@ -77,8 +90,8 @@ def map_tasks_to_memtime_project(tasks_to_create: List[dict], memtime_projects: 
         
     return valid_tasks_to_create
 
-def create_memtime_project(lp_id: int, name: str) -> int:
-    return insert_entity(True, None, name, lp_id, '#bbbbbb')  # TODO: Colour
+def create_memtime_project(lp_id: int, name: str, color: str = '#bbbbbb') -> int:  # TODO: Colour
+    return insert_entity(True, None, name, lp_id, color)
 
 def create_memtime_task(lp_id: int, name: str, parent_id: int) -> int:
     return insert_entity(False, parent_id, name, lp_id)
@@ -90,7 +103,7 @@ def confirm_and_create_projects(projects_to_create: List[Tuple[int, str]]):
 
     confirmed = ask_question('\nAre you sure you want to create these new projects?')
     if not confirmed:
-        sys.exit(1)
+        exit(1)
 
     for id, name in projects_to_create:
         memtime_id = create_memtime_project(id, name)
@@ -103,13 +116,16 @@ def confirm_and_create_tasks(tasks_to_create: List[Tuple[dict, Project]]):
 
     confirmed = ask_question('\nAre you sure you want to create these new tasks?')
     if not confirmed:
-        sys.exit(1)
+        exit(1)
 
     for task, memtime_project in tasks_to_create:
         memtime_id = create_memtime_task(task["id"], task['name'], memtime_project.id)
         print(f'Created task {task["name"]} ({task["id"]}) -> {memtime_id}')
 
 def main():
+    # Create Shared Time project and task if not exists
+    check_and_create_shared_time_entities()
+
     # Get current member ID
     user_account = fetch_my_account()
     member_id = user_account['id']
@@ -184,3 +200,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    exit(0)

@@ -14,6 +14,9 @@ DATABASE_FILENAME = 'connected-app.tb-private-local-projects.db'
 ENTITY_PROJECT_TYPE = 'project'
 ENTITY_TASK_TYPE = 'task'
 
+SHARED_TIME_NAME = 'Shared Time'
+SHARED_TIME_COLOR = '#AC1457'
+
 def find_database_path() -> str:
     """
     Recursively searches for the database filename as the directory path may be different per user. Returns full path.
@@ -90,6 +93,30 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
     '''
 
     res = cursor.execute(query, params)
+
+    tasks: List[Task] = []
+    for entity in res:
+        id, label, liquid_planner_url, parent_id, is_active_int = entity
+        is_active = is_active_int == 1
+        task = Task(id, label, liquid_planner_url, parent_id, is_active)
+        tasks.append(task)
+    
+    conn.close()
+    return tasks
+
+def query_task_by_name(name: str) -> List[Task]:
+    conn = sqlite3.connect(find_database_path())
+    cursor = conn.cursor()
+
+    values = [name, ENTITY_TASK_TYPE]
+
+    query = f'''
+        SELECT id, name, description, parentId, isActive
+        FROM entity
+        WHERE name = ? AND type = ?
+    '''
+
+    res = cursor.execute(query, values)
 
     tasks: List[Task] = []
     for entity in res:

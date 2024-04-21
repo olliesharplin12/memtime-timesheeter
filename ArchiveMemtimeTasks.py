@@ -52,3 +52,4 @@ def archive_memtime_tasks():
 
 if __name__ == '__main__':
     archive_memtime_tasks()
+    exit(0)

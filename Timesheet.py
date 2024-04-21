@@ -1,18 +1,13 @@
 import datetime
-import sys
 from typing import List
 
 from models.Task import Task
-from models.Project import Project
-from utils.MemTime import query_time_entries, query_projects, query_tasks
+from utils.MemTime import query_time_entries, query_projects, query_tasks, SHARED_TIME_NAME
 from utils.LiquidPlanner import fetch_my_account, fetch_member, fetch_tasks_by_ids, post_timesheet_entry
-from utils.Util import ask_question, get_epoch_from_datetime
+from utils.Util import ask_question, get_epoch_from_datetime, exit
 
 
-# Value cannot be None, leave empty string if not used.
-SHARED_TIME_PROJECT_NAME = 'Shared Time'
 LOW_REMAINING_TIME_WARNING_HRS = 0.5
-
 SECONDS_IN_DAY = 60 * 60 * 24
 
 def get_date_input() -> datetime.datetime:
@@ -45,15 +40,14 @@ def main():
     entity_ids = list(set(entry.entity_id for entry in timesheet_entries))
 
     # Fetch shared time project
-    if len(SHARED_TIME_PROJECT_NAME) == 0:
+    if len(SHARED_TIME_NAME) == 0:
         shared_time_project = None
     else:
-        projects = query_projects(SHARED_TIME_PROJECT_NAME)
+        projects = query_projects(SHARED_TIME_NAME)
         if len(projects) > 0:
             shared_time_project = projects[0]
         else:
-            print(f'Could not find a shared time project for {SHARED_TIME_PROJECT_NAME}')
-            sys.exit(1)
+            shared_time_project = None
 
     # Fetch tasks from database and validate all time entries can be mapped
     tasks = query_tasks(entity_ids)
@@ -64,7 +58,7 @@ def main():
             tasks[task_index].add_entry(entry)
         except ValueError:
             print(f'ERROR: Failed to query a MemTime task for timesheet entry "{entry}"')
-            sys.exit(1)
+            exit(1)
     
     # Create task lists based on if they are shared time tasks and they have valid LP IDs
     tasks_to_timesheet: List[Task] = []
@@ -91,7 +85,7 @@ def main():
         confirmed = ask_question(f'Do you want to skip timesheeting the above task(s)?')
         if not confirmed:
             print('Cancelled')
-            sys.exit(1)
+            exit(1)
         
         shared_time_on_remaining_tasks = ask_question(f'Do you want to split shared time across the remaining tasks, or will you timesheet the above tasks manually?', 'spl', 'man')
         if shared_time_on_remaining_tasks:
@@ -114,7 +108,7 @@ def main():
         except ValueError:
             print(f'ERROR: Could not find LiquidPlanner task for "{task.label}"')
             # TODO: Do we want to add this to invalid tasks?
-            sys.exit(1)
+            exit(1)
 
         # This will be set on task objects in all lists as lists contain same object references
         task.set_liquid_planner_task(tasks_json[lp_task_index], member_id)
@@ -163,7 +157,7 @@ def main():
     confirmed = ask_question('Confirm you want to submit your timesheet as shown above?')
     if not confirmed:
         print('Cancelled')
-        sys.exit(1)
+        exit(1)
     
     # Save to LiquidPlanner
     post_dt = date.replace(hour=17)
@@ -189,3 +183,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    exit(0)

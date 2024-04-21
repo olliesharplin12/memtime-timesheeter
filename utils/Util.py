@@ -1,5 +1,6 @@
-import datetime 
+import datetime
 import tzlocal
+import sys
 from typing import Union
 
 def ask_question(question: str, yes_char: str = 'y', no_char: str = 'n') -> bool:
@@ -36,3 +37,7 @@ def parse_liquid_planner_id(description: str) -> Union[int | None]:
         return None
     except:
         return None
+
+def exit(code: int):
+    input('\nPress enter to close...')
+    sys.exit(code)
