@@ -9,14 +9,23 @@ from models.Task import Task
 from utils.Util import get_epoch_from_datetime
 
 
-# TODO: User ID is wrong
-DATABASE_PATH = os.path.join(os.path.expanduser('~'), 'AppData\\Local\\memtime\\user\\62d87704d32b2e0009546557\\data\\tb-private-local-projects\\connected-app.tb-private-local-projects.db')
+DATABASE_PATH_PREFIX = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'memtime', 'user')
+DATABASE_FILENAME = 'connected-app.tb-private-local-projects.db'
 ENTITY_PROJECT_TYPE = 'project'
 ENTITY_TASK_TYPE = 'task'
 
+def find_database_path() -> str:
+    """
+    Recursively searches for the database filename as the directory path may be different per user. Returns full path.
+    """
+    for root, _, files in os.walk(DATABASE_PATH_PREFIX):
+        for filename in files:
+            if filename.endswith(DATABASE_FILENAME):
+                return os.path.join(root, filename)
+    return None
 
 def query_time_entries(start_epoch: int, end_epoch: int) -> List[TimesheetEntry]:
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     query = '''
@@ -38,7 +47,7 @@ def query_time_entries(start_epoch: int, end_epoch: int) -> List[TimesheetEntry]
     return time_entries
 
 def query_projects(name: str = None) -> List[Project]:
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     where_clause = 'WHERE type = ?'
@@ -65,7 +74,7 @@ def query_projects(name: str = None) -> List[Project]:
     return projects
 
 def query_tasks(entity_ids: List[int] = None) -> List[Task]:
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     where_clause = 'WHERE type = ?'
@@ -93,7 +102,7 @@ def query_tasks(entity_ids: List[int] = None) -> List[Task]:
     return tasks
 
 def insert_entity(is_project: bool, parent_id: int, name: str, description: str, color: str = None) -> int:
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     entity_type = ENTITY_PROJECT_TYPE if is_project else ENTITY_TASK_TYPE
@@ -125,7 +134,7 @@ def insert_entity(is_project: bool, parent_id: int, name: str, description: str,
     return memtime_id
 
 def set_entity_name(id: int, name: str):
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     values = [name, id]
@@ -141,7 +150,7 @@ def set_entity_name(id: int, name: str):
     conn.close()
 
 def set_entity_is_active(id: int, is_active: bool):
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(find_database_path())
     cursor = conn.cursor()
 
     is_active_value = 1 if is_active else 0
