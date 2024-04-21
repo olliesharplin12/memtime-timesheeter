@@ -97,10 +97,10 @@ def main():
             shared_time_total_tasks: List[Task] = [task for task in tasks if task.id not in invalid_task_ids]
     
     # Get default activity information
-    user_account = fetch_my_account()
-    member_id = user_account['id']
-    member = fetch_member(member_id)
-    default_activity_id = member['default_activity_id']
+    user_account: dict = fetch_my_account()
+    member_id: int = user_account['id']
+    member: dict = fetch_member(member_id)
+    default_activity_id: int = member['default_activity_id']
 
     # Fetch, validate and map LiquidPlanner tasks
     liquid_planner_task_ids = [task.liquid_planner_id for task in tasks_to_timesheet]
@@ -116,7 +116,7 @@ def main():
             sys.exit(1)
 
         # This will be set on task objects in all lists as lists contain same object references
-        task.set_liquid_planner_task(member_id, default_activity_id, tasks_json[lp_task_index])
+        task.set_liquid_planner_task(tasks_json[lp_task_index], member_id)
      
     # Calculate and set shared time multiplier
     total_time = sum([task.get_logged_time_hrs() for task in shared_time_total_tasks])
@@ -134,20 +134,20 @@ def main():
 
     # Print task summary
     for task in tasks_to_timesheet:
-        print(f'\t{task.get_print_summary(shared_time_multiplier, False)}')
+        print(f'\t{task.get_print_summary_with_time(shared_time_multiplier, False)}')
 
     # If user has selected to log tasks manually, print invalid task total and list
     if len(invalid_tasks) > 0 and not shared_time_on_remaining_tasks:
         print(f'\nTasks To Manually Timesheet: {round(invalid_task_time, 2)} hrs')
         for task in invalid_tasks:
-            print(f'\t{task.get_print_summary(shared_time_multiplier, True)}')
+            print(f'\t{task.get_print_summary_with_time(shared_time_multiplier, True)}')
     
     # Print shared time summary if time logged
     if total_shared_project_time > 0:
         print(f'\nShared Time Tasks: {round(total_shared_project_time, 2)} hrs ({round(shared_time_multiplier, 2)}x task multiplier)')
         for task in shared_time_project.tasks:
             # Shared time multiplier should not be applied to these tasks
-            print(f'\t{task.get_print_summary(1, True)}')
+            print(f'\t{task.get_print_summary_with_time(1, True)}')
 
     # Get confirmation of log output before logging to LiquidPlanner
     print()
@@ -164,9 +164,10 @@ def main():
 
     for task in tasks_to_timesheet:
         logged_time_hrs = round(task.get_logged_time_hrs() * shared_time_multiplier, 2)
+        activity_id = task.liquid_planner_activity_id or default_activity_id
         body = {
             'work': logged_time_hrs,
-            'activity_id': task.liquid_planner_activity_id,
+            'activity_id': activity_id,
             'low': max(task.liquid_planner_remaining_low - logged_time_hrs, 0),
             'high': max(task.liquid_planner_remaining_high - logged_time_hrs, 0),
             'work_performed_on': post_dt.isoformat()

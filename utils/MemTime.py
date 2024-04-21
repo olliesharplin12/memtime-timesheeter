@@ -122,3 +122,20 @@ def insert_entity(is_project: bool, parent_id: int, name: str, description: str,
 
     conn.close()
     return memtime_id
+
+def set_task_is_active(id: int, is_active: bool):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+
+    is_active_value = 1 if is_active else 0
+    values = [is_active_value, id, ENTITY_TASK_TYPE]
+
+    query = f'''
+        UPDATE entity
+        SET isActive = ?
+        WHERE id = ? AND type = ?
+    '''
+
+    _ = cursor.execute(query, values)
+    conn.commit()
+    conn.close()
