@@ -129,7 +129,6 @@ def main():
     print('\nFiltering projects to create...')
     projects_from_tasks = set([(task['project_id'], task['parent_crumbs'][1]) for task in non_existing_tasks])
     projects_to_create = [(id, name) for id, name in projects_from_tasks if id not in existing_project_ids]
-    # TODO: Unarchive existing projects / update name if different?
     
     # Create new projects and refresh list
     if len(projects_to_create) > 0:
@@ -167,6 +166,8 @@ def main():
         for memtime_task in tasks_to_set_active:
             set_entity_is_active(memtime_task.id, True)
             print(f'Task "{memtime_task.label}" reactivated')
+    
+    # TODO: Update project name if different?
 
     # Rename tasks if name is different
     if len(tasks_to_rename) > 0:

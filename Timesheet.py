@@ -11,6 +11,7 @@ from utils.Util import ask_question, get_epoch_from_datetime
 
 # Value cannot be None, leave empty string if not used.
 SHARED_TIME_PROJECT_NAME = 'Shared Time'
+LOW_REMAINING_TIME_WARNING_HRS = 0.5
 
 SECONDS_IN_DAY = 60 * 60 * 24
 
@@ -148,6 +149,14 @@ def main():
         for task in shared_time_project.tasks:
             # Shared time multiplier should not be applied to these tasks
             print(f'\t{task.get_print_summary_with_time(1, True)}')
+    
+    # Print warnings regarding tasks which have no remaining time
+    print()
+    for task in tasks_to_timesheet:
+        logged_time_hrs = round(task.get_logged_time_hrs() * shared_time_multiplier, 2)
+        remaining_time_hrs = task.liquid_planner_remaining_high - logged_time_hrs
+        if remaining_time_hrs <= LOW_REMAINING_TIME_WARNING_HRS:
+            print(f'WARNING: "{task.label}" has {remaining_time_hrs} hrs remaining')
 
     # Get confirmation of log output before logging to LiquidPlanner
     print()
