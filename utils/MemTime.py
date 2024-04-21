@@ -48,7 +48,7 @@ def query_projects(name: str = None) -> List[Project]:
         params += [name]
 
     query = f'''
-        SELECT id, name, description
+        SELECT id, name, description, isActive
         FROM entity
         {where_clause}
     '''
@@ -57,8 +57,9 @@ def query_projects(name: str = None) -> List[Project]:
 
     projects: List[Project] = []
     for entity in res:
-        id, label, description = entity
-        projects.append(Project(id, label, description))
+        id, label, description, is_active_int = entity
+        is_active = is_active_int == 1
+        projects.append(Project(id, label, description, is_active))
 
     conn.close()
     return projects
@@ -123,17 +124,33 @@ def insert_entity(is_project: bool, parent_id: int, name: str, description: str,
     conn.close()
     return memtime_id
 
-def set_task_is_active(id: int, is_active: bool):
+def set_entity_name(id: int, name: str):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+
+    values = [name, id]
+
+    query = f'''
+        UPDATE entity
+        SET name = ?
+        WHERE id = ?
+    '''
+
+    _ = cursor.execute(query, values)
+    conn.commit()
+    conn.close()
+
+def set_entity_is_active(id: int, is_active: bool):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     is_active_value = 1 if is_active else 0
-    values = [is_active_value, id, ENTITY_TASK_TYPE]
+    values = [is_active_value, id]
 
     query = f'''
         UPDATE entity
         SET isActive = ?
-        WHERE id = ? AND type = ?
+        WHERE id = ?
     '''
 
     _ = cursor.execute(query, values)

@@ -3,10 +3,11 @@ from models.Task import Task
 from utils.Util import parse_liquid_planner_id
 
 class Project:
-    def __init__(self, id: int, label: str, liquid_planner_id: str):
+    def __init__(self, id: int, label: str, liquid_planner_id: str, is_active: bool):
         self.id = id
         self.label = label
         self.liquid_planner_id = parse_liquid_planner_id(liquid_planner_id)
+        self.is_active = is_active
         self.tasks: List[Task] = []
 
     def add_task(self, task: Task):

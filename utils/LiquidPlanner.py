@@ -7,7 +7,6 @@ from typing import List
 
 WORKSPACE_ID = 164559
 BASE_URL = f'https://app.liquidplanner.com/api/v1/workspaces/{WORKSPACE_ID}/'
-TASK_LINK_URL_FORMAT = 'https://app.liquidplanner.com/space/164559/projects/show/{0}'
 FETCH_MEMBER_URL_FORMAT = 'members/{0}'
 FETCH_TASKS_URL = 'tasks'
 FETCH_UPCOMING_TASKS_URL = 'upcoming_tasks'
