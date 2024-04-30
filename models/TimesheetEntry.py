@@ -8,7 +8,7 @@ class TimesheetEntry:
         self.start = start
         self.end = end
     
-    def get_entry_time_hrs(self):
+    def get_entry_time_hrs(self) -> float:
         return round((self.end - self.start) / 60.0 / 60.0, ENTRY_TIME_DECIMALS)
 
     def __str__(self):

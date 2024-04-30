@@ -9,18 +9,18 @@ WORKSPACE_ID = 164559
 BASE_URL = f'https://app.liquidplanner.com/api/v1/workspaces/{WORKSPACE_ID}/'
 FETCH_MEMBER_URL_FORMAT = 'members/{0}'
 FETCH_TASKS_URL = 'tasks'
+FETCH_UPCOMING_TASKS_URL = 'upcoming_tasks'
 POST_TIMESHEET_URL_FORMAT = 'treeitems/{0}/track_time'
 
 AUTH = HTTPBasicAuth(LIQUID_PLANNER_EMAIL, LIQUID_PLANNER_PASSWORD)
 
-def build_url(url_suffix: str, query_params: List[tuple[str, str]] | None = None) -> str:
+def build_url(url_suffix: str, query_params: List[tuple[str, str]] = None) -> str:
     if query_params is not None and len(query_params) > 0:
-        # TODO: Convert to url encoded string?
         return BASE_URL + url_suffix + '?' + '&'.join([f'{key}={value}' for key, value in query_params])
     else:
         return BASE_URL + url_suffix
 
-def get(url_suffix: str, query_params: List[tuple[str, str]] | None = None) -> Response:
+def get(url_suffix: str, query_params: List[tuple[str, str]] = None) -> Response:
     url = build_url(url_suffix, query_params)
     return requests.get(url, auth=AUTH)
 
@@ -46,6 +46,15 @@ def fetch_tasks_by_ids(task_ids: List[int]) -> dict:
     query_params: List[tuple[str, str]] = [('filter[]=id', ','.join(map(str, task_ids)))]
 
     response = get(FETCH_TASKS_URL, query_params)
+    if response.status_code != 200:
+        raise Exception(f'Response Error: {response.text}')
+
+    return response.json()
+
+def fetch_upcoming_tasks(limit: int) -> dict:
+    query_params: List[tuple[str, str]] = [('flat', True), ('limit', limit)]
+
+    response = get(FETCH_UPCOMING_TASKS_URL, query_params)
     if response.status_code != 200:
         raise Exception(f'Response Error: {response.text}')
 
