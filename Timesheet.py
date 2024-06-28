@@ -1,4 +1,5 @@
 import datetime
+import tzlocal
 from typing import List
 
 from models.Task import Task
@@ -164,6 +165,7 @@ def main():
     now = datetime.datetime.now()
     if now < post_dt:
         post_dt = now
+    post_dt_tz = post_dt.replace(microsecond=0).astimezone(tzlocal.get_localzone())
 
     for task in tasks_to_timesheet:
         logged_time_hrs = round(task.get_logged_time_hrs() * shared_time_multiplier, 2)
@@ -173,7 +175,7 @@ def main():
             'activity_id': activity_id,
             'low': max(task.liquid_planner_remaining_low - logged_time_hrs, 0),
             'high': max(task.liquid_planner_remaining_high - logged_time_hrs, 0),
-            'work_performed_on': post_dt.isoformat()
+            'work_performed_on': post_dt_tz.isoformat()
         }
 
         try:
