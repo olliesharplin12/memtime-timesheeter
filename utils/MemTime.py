@@ -42,8 +42,9 @@ def query_time_entries(start_epoch: int, end_epoch: int) -> List[TimesheetEntry]
     time_entries: List[TimesheetEntry] = []
     for entry in res:
         task_id, start_epoch, end_epoch, body = entry
-        entity = json.loads(body)['entity']
-        entry = TimesheetEntry(task_id, entity['entityType'], entity['label'], int(start_epoch), int(end_epoch))
+        body = json.loads(body)
+        entity = body['entity']
+        entry = TimesheetEntry(task_id, entity['entityType'], entity['label'], int(start_epoch), int(end_epoch), body.get("comment", None))
         time_entries.append(entry)
 
     conn.close()
