@@ -14,7 +14,8 @@ SECONDS_IN_DAY = 60 * 60 * 24
 def get_date_input() -> datetime.datetime:
     while True:
         date_str = input('Enter date or press enter for today [dd/mm/yyyy]: ')
-        if date_str == '':
+        use_today = date_str == ''
+        if use_today:
             date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             try:
@@ -24,7 +25,12 @@ def get_date_input() -> datetime.datetime:
                 continue
         
         while True:
-            confirm = input(f'Confirm date "{date.strftime("%d/%m/%Y")}" [y/n]: ').lower()
+            date_str = date.strftime("%d/%m/%Y")
+            if use_today:
+                print(f'Timesheeting for "{date_str}"')
+                return date
+            
+            confirm = input(f'Confirm date "{date_str}" [y/n]: ').lower()
             if confirm == 'y':
                 return date
             elif confirm == 'n':

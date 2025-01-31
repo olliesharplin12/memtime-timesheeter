@@ -7,7 +7,7 @@ from utils.LiquidPlanner import fetch_tasks_by_ids, fetch_my_account
 from utils.Util import ask_question
 
 
-EXPIRED_TASK_AGE_DAYS = 7
+EXPIRED_TASK_AGE_DAYS = 4
 
 def archive_memtime_tasks():
     # Read all Tasks in MemTime and filter active tasks
