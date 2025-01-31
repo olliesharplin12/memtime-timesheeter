@@ -56,7 +56,7 @@ class Task:
     def get_print_summary_with_time(self, shared_time_multiplier: float, ignore_rem_time: bool) -> str:
         logged_time_str = f'{str(round(self.get_logged_time_hrs() * shared_time_multiplier, 2)).ljust(4)} hrs'
         if ignore_rem_time:
-            rem_time = ""
+            rem_time = " "
         else:
             no_remaining_time = self.get_remaining_time(shared_time_multiplier) <= 0
             rem_time = "*" if no_remaining_time else " "
