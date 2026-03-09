@@ -20,6 +20,9 @@ class Task:
     def get_logged_time_hrs(self) -> float:
         return sum([entry.get_entry_time_hrs() for entry in self.timesheet_entries])
 
+    def build_timesheet_note(self) -> str:
+        return " | ".join([entry.comment for entry in self.timesheet_entries if entry.comment is not None])
+
     def set_liquid_planner_task(self, task_json: dict, member_id: int):
         self.liquid_planner_crumbs = task_json['parent_crumbs']
         self.liquid_planner_name = task_json['name']
@@ -44,16 +47,24 @@ class Task:
         else:
             return self.assignment['is_done'] and self.assignment['done_on'] < expiry_date.isoformat()
     
-    def get_print_summary(self, ignore_lp_task: bool) -> str:
-        if ignore_lp_task:
-            return self.label
-        else:
-            lp_task_label = ' > '.join(self.liquid_planner_crumbs[1:] + [self.liquid_planner_name])
-            return f'{self.label} ---> {lp_task_label}'
+    def get_print_summary(self) -> str:
+        note = self.build_timesheet_note()
+        if len(note) > 0:
+            return f'{self.label} - *{note}*'
+        return self.label
     
-    def get_print_summary_with_time(self, shared_time_multiplier: float, ignore_lp_task: bool) -> str:
+    def get_print_summary_with_time(self, shared_time_multiplier: float, ignore_rem_time: bool) -> str:
         logged_time_str = f'{str(round(self.get_logged_time_hrs() * shared_time_multiplier, 2)).ljust(4)} hrs'
-        return f'{logged_time_str} | {self.get_print_summary(ignore_lp_task)}'
+        if ignore_rem_time:
+            rem_time = " "
+        else:
+            no_remaining_time = self.get_remaining_time(shared_time_multiplier) <= 0
+            rem_time = "*" if no_remaining_time else " "
+        return f'{rem_time}{logged_time_str} | {self.get_print_summary()}'
+    
+    def get_remaining_time(self, shared_time_multiplier: float) -> float:
+        logged_time_hrs = self.get_logged_time_hrs() * shared_time_multiplier
+        return round(self.liquid_planner_remaining_high - logged_time_hrs, 2)
     
     def __str__(self):
         return f'{self.id}, {self.label}, {self.liquid_planner_url}, {len(self.timesheet_entries)} timesheet entries totalling {self.get_logged_time_hrs()} hrs'

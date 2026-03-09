@@ -7,7 +7,7 @@ from utils.LiquidPlanner import fetch_tasks_by_ids, fetch_my_account
 from utils.Util import ask_question
 
 
-EXPIRED_TASK_AGE_DAYS = 4
+EXPIRED_TASK_AGE_DAYS = 0
 
 def archive_memtime_tasks():
     # Read all Tasks in MemTime and filter active tasks
@@ -39,7 +39,7 @@ def archive_memtime_tasks():
         # Confirm with user before archiving tasks
         print(f'\nThe tasks below have had your assignment marked done for longer than {EXPIRED_TASK_AGE_DAYS} days:')
         for memtime_task in tasks_to_archive:
-            print(f'\t{memtime_task.get_print_summary(False)}')
+            print(f'\t{memtime_task.get_print_summary()}')
         
         print('\nIf there are any tasks above which you do not want to archive, toggle their done flag on LiquidPlanner before running this script again.')
         archive_tasks = ask_question('Do you want to archive the above tasks?')

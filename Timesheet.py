@@ -126,7 +126,7 @@ def main():
     shared_time_multiplier = total_time / (total_time - total_shared_project_time)
     
     # Print total daily time
-    print(f'\nTotal Task Time: {round(total_time, 2)} hrs')
+    print(f'\n==================== Total Task Time: {round(total_time, 2)} hrs ====================')
 
     # If user has selected to log tasks manually, print valid task total of what is being logged by script
     if len(invalid_tasks) > 0 and not shared_time_on_remaining_tasks:
@@ -135,8 +135,12 @@ def main():
         print(f'\nValid Timesheet Tasks: {round(valid_task_time, 2)} hrs')
 
     # Print task summary
-    for task in tasks_to_timesheet:
-        print(f'\t{task.get_print_summary_with_time(shared_time_multiplier, False)}')
+    project_ids = sorted(set([task.parent_id for task in tasks_to_timesheet]), reverse=True)
+    for project_id in project_ids:
+        project_tasks = [task for task in tasks_to_timesheet if task.parent_id == project_id]
+        print(f'\n{project_tasks[0].liquid_planner_crumbs[1]}')
+        for task in project_tasks:
+            print(f'\t{task.get_print_summary_with_time(shared_time_multiplier, False)}')
 
     # If user has selected to log tasks manually, print invalid task total and list
     if len(invalid_tasks) > 0 and not shared_time_on_remaining_tasks:
@@ -151,13 +155,8 @@ def main():
             # Shared time multiplier should not be applied to these tasks
             print(f'\t{task.get_print_summary_with_time(1, True)}')
     
-    # Print warnings regarding tasks which have no remaining time
-    print()
-    for task in tasks_to_timesheet:
-        logged_time_hrs = task.get_logged_time_hrs() * shared_time_multiplier
-        remaining_time_hrs = round(task.liquid_planner_remaining_high - logged_time_hrs, 2)
-        if remaining_time_hrs <= LOW_REMAINING_TIME_WARNING_HRS:
-            print(f'WARNING: "{task.label}" has {remaining_time_hrs} hrs remaining')
+    print('\n* next to task hours means there is no remaining LiquidPlanner time')
+    print('=' * 67)
 
     # Get confirmation of log output before logging to LiquidPlanner
     print()
