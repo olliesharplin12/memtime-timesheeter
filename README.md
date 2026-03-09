@@ -20,7 +20,7 @@ Mentioned throughout the rest of these instructions are the execution of scripts
 
 1. Ensure Python 3.9 or later is installed and added to PATH.
 2. Using the script execution process mentioned above, open a command-line interface in the root directory of this repository.
-3. Run command `pip install tzlocal`.
+3. Run command `pip install tzlocal requests`.
 4. Follow instructions in the env.py.template file to allow LiquidPlanner requests to authenticate.
 
 #### Configure Project/Task Structure

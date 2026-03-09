@@ -1,4 +1,5 @@
 import datetime
+import sys
 from typing import List, Tuple
 
 from models.Project import Project
@@ -109,20 +110,30 @@ def confirm_and_create_projects(projects_to_create: List[Tuple[int, str]]):
         memtime_id = create_memtime_project(id, name)
         print(f'Created project {name} ({id}) -> {memtime_id}')
 
-def confirm_and_create_tasks(tasks_to_create: List[Tuple[dict, Project]]):
+def confirm_and_create_tasks(tasks_to_create: List[Tuple[dict, Project]], days_to_get_tasks: int):
     print('\nNew tasks:')
-    for task, memtime_project in sorted(tasks_to_create, key=lambda tup: tup[1].label):
+    for task, memtime_project in tasks_to_create:
         print(memtime_project.label, '->', task['name'])
 
-    confirmed = ask_question('\nAre you sure you want to create these new tasks?')
-    if not confirmed:
-        exit(1)
+    while True:
+        res = input(f'\nEnter \'y\' to confirm you want to create these new tasks? If not, enter \'n\' to quit, or the number of working days to create tasks for (current {days_to_get_tasks}): ').lower()
+        if res == 'y':
+            break
+        elif res == 'n':
+            exit(1)
+        else:
+            try:
+                days_to_get_tasks = int(res)
+            except ValueError:
+                continue
+            main(days_to_get_tasks)
+            sys.exit(0)
 
     for task, memtime_project in tasks_to_create:
         memtime_id = create_memtime_task(task["id"], task['name'], memtime_project.id)
         print(f'Created task {task["name"]} ({task["id"]}) -> {memtime_id}')
 
-def main():
+def main(days_to_get_tasks: int):
     # Create Shared Time project and task if not exists
     check_and_create_shared_time_entities()
 
@@ -131,7 +142,7 @@ def main():
     member_id = user_account['id']
 
     # Get upcoming LP tasks and existing MemTime tasks
-    upcoming_tasks: List[dict] = get_upcoming_tasks(member_id, DAYS_TO_GET_TASKS)
+    upcoming_tasks: List[dict] = get_upcoming_tasks(member_id, days_to_get_tasks)
     memtime_tasks: List[Task] = query_tasks()
     
     # Map LP tasks to MemTime tasks by LP URL and filter out new tasks to create
@@ -159,7 +170,7 @@ def main():
     
     # Create new tasks
     if len(tasks_to_create) > 0:
-        confirm_and_create_tasks(tasks_to_create)
+        confirm_and_create_tasks(tasks_to_create, days_to_get_tasks)
     else:
         print('No new tasks to create')
 
@@ -189,7 +200,7 @@ def main():
     if len(tasks_to_rename) > 0:
         print('\nTasks to rename:')
         for memtime_task in tasks_to_rename:
-            print(f'\t{memtime_task.get_print_summary(False)}')
+            print(f'\t{memtime_task.get_print_summary()}')
         
         print()
         rename_tasks = ask_question('Do you want to rename the above tasks?')
@@ -199,5 +210,15 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    arguments = sys.argv[1:]
+    if len(arguments) > 0:
+        try:
+            days_to_get_tasks = int(arguments[0])
+        except ValueError:
+            print(f'Invalid argument {arguments[0]} for days to get tasks.')
+            sys.exit(1)
+    else:
+        days_to_get_tasks = DAYS_TO_GET_TASKS
+
+    main(days_to_get_tasks)
     exit(0)
