@@ -48,6 +48,18 @@ if exist "%~dp0env.py" (
 )
 
 echo.
+echo Validating LiquidPlanner credentials...
+python -c "import sys, requests; from requests.auth import HTTPBasicAuth; sys.path.insert(0, '.'); from env import LIQUID_PLANNER_EMAIL, LIQUID_PLANNER_PASSWORD; r = requests.get('https://app.liquidplanner.com/api/v1/account', auth=HTTPBasicAuth(LIQUID_PLANNER_EMAIL, LIQUID_PLANNER_PASSWORD)); print('Credentials are valid. Logged in as: ' + r.json().get('user_name', '')) if r.status_code == 200 else (print('ERROR: Credentials are invalid (HTTP ' + str(r.status_code) + '). Please re-run Setup with correct credentials.'), sys.exit(1))"
+if %errorlevel% neq 0 (
+    echo.
+    del "%~dp0env.py" >nul 2>&1
+    echo env.py has been deleted. Please re-run Setup with correct credentials.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo.
 echo ==========================================
 echo  Setup complete! You can now run the
 echo  Timesheet, RefreshTasks and ArchiveTasks
