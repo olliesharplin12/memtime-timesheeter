@@ -17,9 +17,10 @@ This application will extract logged time against tasks in MemTime (TimeBro), an
 
 #### Daily Use
 
-1. Double-click **`Timesheet.bat`** to submit your timesheet.
+1. Use Memtime's `Captured Activities` to create `Time Entries` and assign them to your imported LiquidPlanner tasks.
+2. Double-click **`Timesheet.bat`** to submit your timesheet.
 
-## How to Use
+## Task Management
 
 #### Automated MemTime Task Creation
 The `RefreshTasks` script will pull tasks from your upcoming work (My Work) section of LiquidPlanner and will automatically create them in MemTime. This only fetches and creates tasks in your upcoming work, which means the tasks need to be added to a sprint package in LiquidPlanner. There is also a limitation where LiquidPlanner tasks which are not assigned to a project (such as tasks in INBOX) will not be created in MemTime.
@@ -48,6 +49,8 @@ Follow the steps below to create a task manually:
 When executing the `RefreshTasks` script, a shared time project and task will be automatically created. This can be used for logging time for things such as checking emails, doing your timesheet and taking breaks. Any tasks within this `Memtime Project` will have their daily logged time spread across other tasks worked on that day, split by % of the total time.
 
 > Note: You can create additional tasks within this shared time project (e.g. Emails, Breaks, Timesheet). This can be useful if you want to have more visibility on how much time you are logging to specific shared time areas of your day.
+
+## Additional Features
 
 #### Skip Timesheeting Tasks
 
