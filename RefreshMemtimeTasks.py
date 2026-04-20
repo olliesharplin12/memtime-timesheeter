@@ -127,7 +127,7 @@ def confirm_and_create_tasks(tasks_to_create: List[Tuple[dict, Project]], days_t
             except ValueError:
                 continue
             main(days_to_get_tasks)
-            sys.exit(0)
+            exit(0)
 
     for task, memtime_project in tasks_to_create:
         memtime_id = create_memtime_task(task["id"], task['name'], memtime_project.id)
